@@ -16,7 +16,20 @@ conectarDB();
 app.use(cors());
 
 // Habilitar express.json
-app.use(express.json({ extended: true }));
+app.use(express.json());
+
+// Importar rutas
+const authRoutes = require('./routes/authRoutes');
+const testRoutes = require('./routes/testRoutes');
+
+// Usar rutas de autenticación
+app.use('/api/auth', authRoutes);
+app.use('/api/test', testRoutes);
+
+// Ruta de prueba simple
+app.get('/test', (req, res) => {
+  res.json({ mensaje: 'Ruta de prueba funcionando' });
+});
 
 // Puerto de la app
 const PORT = process.env.PORT || 4000;
