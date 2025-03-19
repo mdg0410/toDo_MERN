@@ -1,74 +1,84 @@
-# To-Do App con Autenticación
+# ToDo MERN Stack
 
-Aplicación de lista de tareas con funcionalidades de autenticación y autorización, desarrollada utilizando el stack MERN (MongoDB, Express, React, Node.js).
+## Descripción del Proyecto
+Una aplicación de gestión de tareas y proyectos desarrollada con el stack MERN (MongoDB, Express, React y Node.js). Permite a los usuarios crear y gestionar proyectos y tareas asociadas a dichos proyectos.
 
-## Tecnologías Utilizadas
+## Características Implementadas
+- Estructura de base de datos para usuarios, proyectos y tareas
+- Autenticación de usuarios con contraseñas encriptadas
+- Relaciones entre modelos para una gestión efectiva de los datos
+- API RESTful para la gestión de recursos
 
-### Backend
-- Node.js
-- Express
-- MongoDB con Mongoose
-- JWT para autenticación
-- Bcrypt para encriptación de contraseñas
+## Estructura de la Base de Datos
 
-### Frontend
-- React con TypeScript
-- Redux Toolkit para gestión de estado
-- TailwindCSS para estilizado
-- Vite como herramienta de construcción
+### Modelo de Usuario
+- Nombre
+- Correo electrónico (único)
+- Contraseña (encriptada automáticamente)
+- Fecha de creación y actualización
 
-## Estructura del Proyecto
+### Modelo de Proyecto
+- Nombre
+- Descripción
+- Usuario propietario (relación)
+- Fecha de creación y actualización
 
-```
-to-do-app/
-├── backend/         # Servidor Node.js con Express
-├── frontend/        # Cliente React
-├── README.md        # Este archivo
-└── .gitignore       # Configuración de archivos ignorados por Git
-```
+### Modelo de Tarea
+- Título
+- Descripción
+- Estado (pendiente, en progreso, completada)
+- Proyecto asociado (relación)
+- Usuario asignado (relación)
+- Fecha de creación y actualización
 
-## Instalación
+## Configuración del Backend
 
 ### Requisitos Previos
-- Node.js (v14 o superior)
-- MongoDB (local o en la nube)
-- Git
+- Node.js (versión 14 o superior)
+- MongoDB (local o Atlas)
 
-### Pasos de Instalación
+### Pasos para la Instalación
 
-1. **Clonar el repositorio**
-   ```bash
-   git clone https://github.com/tu-usuario/to-do-app.git
-   cd to-do-app
-   ```
+1. Clonar el repositorio
+```
+git clone <url-del-repositorio>
+cd toDo_MERN
+```
 
-2. **Configurar el Backend**
-   ```bash
-   cd backend
-   npm install
-   # Crear archivo .env basado en env.example
-   npm start
-   ```
+2. Instalar dependencias del backend
+```
+cd backend
+npm install
+```
 
-3. **Configurar el Frontend**
-   ```bash
-   cd ../frontend
-   npm install
-   npm run dev
-   ```
+3. Crear archivo de variables de entorno
+Crear un archivo `.env` en el directorio `/backend` con las siguientes variables:
+```
+PORT=4000
+MONGO_URI=mongodb://localhost:27017/todo_mern
+JWT_SECRET=palabrasecreta
+```
 
-## Características
+4. Iniciar el servidor de desarrollo
+```
+npm run dev
+```
 
-- Registro y autenticación de usuarios
-- Creación, lectura, actualización y eliminación de tareas (CRUD)
-- Filtrado de tareas por estado
-- Interfaz responsiva y amigable
+El servidor se iniciará en `http://localhost:4000`
 
-## Contribución
+## Próximos Pasos
+- Implementación de controladores para las operaciones CRUD
+- Middleware de autenticación
+- Frontend en React
+- Despliegue en producción
 
-Las contribuciones son bienvenidas. Por favor, siente libre de abrir un issue o enviar un pull request.
+## Tecnologías Utilizadas
+- MongoDB con Mongoose
+- Express.js
+- Node.js
+- bcrypt (para encriptación)
+- JWT (para autenticación)
 
 ## Licencia
-
-MIT
+ISC
 
