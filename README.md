@@ -164,6 +164,46 @@ Para más detalles sobre cómo probar estos endpoints, consulta la [sección de 
 - bcrypt (para encriptación)
 - JWT (para autenticación)
 
+## Testing
+
+Este proyecto utiliza Jest para realizar pruebas en el frontend y backend.
+
+### Comandos disponibles
+
+Para ejecutar todas las pruebas:
+```bash
+npm test
+```
+
+Para ejecutar solo pruebas del backend:
+```bash
+npm run test:backend
+```
+
+Para ejecutar solo pruebas del frontend:
+```bash
+npm run test:frontend
+```
+
+Para ejecutar pruebas en modo observador (que se re-ejecutan automáticamente al modificar archivos):
+```bash
+npm run test:watch        # Todos los tests
+npm run test:backend:watch    # Solo backend
+npm run test:frontend:watch   # Solo frontend
+```
+
+Para obtener informes de cobertura:
+```bash
+npm run test:coverage         # Todos los tests
+npm run test:backend:coverage # Solo backend
+npm run test:frontend:coverage # Solo frontend
+```
+
+### Estructura de las pruebas
+
+- Backend: `backend/__tests__/`
+- Frontend: `frontend/__tests__/`
+
 ## Licencia
 ISC
 

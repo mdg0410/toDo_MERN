@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1742428208995" clover="3.2.0">
+  <project timestamp="1742428208995" name="All files">
+    <metrics statements="22" coveredstatements="22" conditionals="12" coveredconditionals="11" methods="3" coveredmethods="3" elements="37" coveredelements="36" complexity="0" loc="22" ncloc="22" packages="1" files="3" classes="3"/>
+    <file name="errorHandler.js" path="C:\Users\Steven\Documents\Portafolio Steven\toDo_MERN\backend\middlewares\errorHandler.js">
+      <metrics statements="4" coveredstatements="4" conditionals="8" coveredconditionals="7" methods="1" coveredmethods="1"/>
+      <line num="1" count="2" type="stmt"/>
+      <line num="5" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="8" count="4" type="stmt"/>
+      <line num="15" count="2" type="stmt"/>
+    </file>
+    <file name="rateLimiter.js" path="C:\Users\Steven\Documents\Portafolio Steven\toDo_MERN\backend\middlewares\rateLimiter.js">
+      <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+      <line num="1" count="3" type="stmt"/>
+      <line num="4" count="3" type="stmt"/>
+      <line num="15" count="1" type="stmt"/>
+      <line num="19" count="3" type="stmt"/>
+    </file>
+    <file name="verifyJWT.js" path="C:\Users\Steven\Documents\Portafolio Steven\toDo_MERN\backend\middlewares\verifyJWT.js">
+      <metrics statements="14" coveredstatements="14" conditionals="4" coveredconditionals="4" methods="1" coveredmethods="1"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="3" count="1" type="stmt"/>
+      <line num="5" count="4" type="stmt"/>
+      <line num="7" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="8" count="1" type="stmt"/>
+      <line num="11" count="3" type="stmt"/>
+      <line num="13" count="3" type="stmt"/>
+      <line num="16" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="17" count="1" type="stmt"/>
+      <line num="21" count="1" type="stmt"/>
+      <line num="22" count="1" type="stmt"/>
+      <line num="24" count="1" type="stmt"/>
+      <line num="25" count="1" type="stmt"/>
+      <line num="29" count="1" type="stmt"/>
+    </file>
+  </project>
+</coverage>
