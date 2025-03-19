@@ -18,6 +18,13 @@ app.use(cors());
 // Habilitar express.json
 app.use(express.json());
 
+// Importar middlewares
+const rateLimiter = require('./middlewares/rateLimiter');
+const errorHandler = require('./middlewares/errorHandler');
+
+// Aplicar rate limiter antes de las rutas
+app.use(rateLimiter);
+
 // Importar rutas
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
@@ -27,6 +34,9 @@ const projectRoutes = require('./routes/projectRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/projects', projectRoutes);
+
+// Aplicar el manejador de errores al final de todas las rutas
+app.use(errorHandler);
 
 // Puerto de la app
 const PORT = process.env.PORT || 4000;
