@@ -1,103 +1,74 @@
-# 📌 To-Do App con Autenticación
+# To-Do App con Autenticación
 
-## 🛠️ Instalación de Herramientas (Punto 0)
+Aplicación de lista de tareas con funcionalidades de autenticación y autorización, desarrollada utilizando el stack MERN (MongoDB, Express, React, Node.js).
 
-Este documento describe los pasos iniciales para configurar el entorno de desarrollo de la aplicación **To-Do App con Autenticación**, incluyendo la instalación de dependencias para el frontend y backend.
+## Tecnologías Utilizadas
 
----
+### Backend
+- Node.js
+- Express
+- MongoDB con Mongoose
+- JWT para autenticación
+- Bcrypt para encriptación de contraseñas
 
-## 📂 Estructura del Proyecto
+### Frontend
+- React con TypeScript
+- Redux Toolkit para gestión de estado
+- TailwindCSS para estilizado
+- Vite como herramienta de construcción
+
+## Estructura del Proyecto
 
 ```
-📦 to-do-app/  
-│  
-├── 📂 backend/                # Backend con Node.js + Express  
-│   ├── 📂 node_modules/       # Dependencias del backend  
-│   ├── 📜 package.json        # Paquetes del backend  
-│   ├── 📜 package-lock.json   # Bloqueo de versiones  
-│  
-├── 📂 frontend/               # Frontend con React + TypeScript  
-│   ├── 📂 node_modules/       # Dependencias del frontend  
-│   ├── 📜 package.json        # Paquetes del frontend  
-│   ├── 📜 package-lock.json   # Bloqueo de versiones  
-│  
-├── 📜 .gitignore              # Ignora node_modules/  
-└── 📜 README.md               # Documentación inicial
+to-do-app/
+├── backend/         # Servidor Node.js con Express
+├── frontend/        # Cliente React
+├── README.md        # Este archivo
+└── .gitignore       # Configuración de archivos ignorados por Git
 ```
 
----
+## Instalación
 
-## 📌 1️⃣ Clonar el Repositorio
+### Requisitos Previos
+- Node.js (v14 o superior)
+- MongoDB (local o en la nube)
+- Git
 
-```bash
-git clone https://github.com/tu-usuario/to-do-app.git
-cd to-do-app
-```
+### Pasos de Instalación
 
----
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/tu-usuario/to-do-app.git
+   cd to-do-app
+   ```
 
-## 📌 2️⃣ Configurar el Backend (Node.js + Express)
+2. **Configurar el Backend**
+   ```bash
+   cd backend
+   npm install
+   # Crear archivo .env basado en env.example
+   npm start
+   ```
 
-```bash
-cd backend
-npm init -y
-npm install express mongoose dotenv cors bcrypt jsonwebtoken
-```
+3. **Configurar el Frontend**
+   ```bash
+   cd ../frontend
+   npm install
+   npm run dev
+   ```
 
-✏️ **Descripción de paquetes:**
-- `express` → Framework para manejar rutas y peticiones HTTP.
-- `mongoose` → ORM para trabajar con MongoDB.
-- `dotenv` → Manejo de variables de entorno.
-- `cors` → Permite la comunicación entre el frontend y backend.
-- `bcrypt` → Encriptación de contraseñas.
-- `jsonwebtoken` → Manejo de autenticación con JWT.
+## Características
 
----
+- Registro y autenticación de usuarios
+- Creación, lectura, actualización y eliminación de tareas (CRUD)
+- Filtrado de tareas por estado
+- Interfaz responsiva y amigable
 
-## 📌 3️⃣ Configurar el Frontend (React + TypeScript + SWC + React Router)
+## Contribución
 
-```bash
-cd ../frontend
-npm create vite@latest . --template react-ts
-npm install react-router-dom
-```
+Las contribuciones son bienvenidas. Por favor, siente libre de abrir un issue o enviar un pull request.
 
-✏️ **Descripción de paquetes:**
-- `react-router-dom` → Manejo de navegación entre páginas.
+## Licencia
 
----
-
-## 📌 4️⃣ Ignorar node_modules en Git
-
-Agrega esto en **`.gitignore`** para evitar subir dependencias innecesarias:
-```bash
-# Node.js dependencies
-node_modules/
-backend/node_modules/
-frontend/node_modules/
-```
-
----
-
-## 📌 5️⃣ Levantar Servidores
-
-**Backend:**
-```bash
-cd backend
-node index.js  # O usar nodemon si está instalado
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm run dev
-```
-
-Tu aplicación ahora estará corriendo en **`http://localhost:5173`** (frontend) y **`http://localhost:3000`** (backend).
-
----
-
-## 🚀 ¡Listo para el siguiente paso!
-
-Ahora que el entorno está configurado, pasamos al siguiente punto: **Definir la estructura de la base de datos**. 📌🔧
+MIT
 
