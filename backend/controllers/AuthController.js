@@ -97,7 +97,16 @@ const verifyUser = async (req, res) => {
   try {
     // req.user se agrega desde el middleware verifyJWT
     const user = await User.findById(req.user.id).select('-password');
-    res.json(user);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    res.json({
+      _id: user._id,
+      id: user._id, // Para mantener compatibilidad con el frontend
+      name: user.name,
+      email: user.email
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error en el servidor' });
