@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const TaskSchema = mongoose.Schema({
+const taskSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
@@ -12,22 +12,35 @@ const TaskSchema = mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pendiente', 'en progreso', 'completada'],
-    default: 'pendiente'
+    enum: ['pending', 'in-progress', 'completed'],
+    default: 'pending'
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
   project: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',
-    required: false  // Cambiado a false para permitir tareas sin proyecto por ahora
-  },
-  assignedTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    default: null
   },
   createdAt: {
     type: Date,
-    default: Date.now()
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
-module.exports = mongoose.model('Task', TaskSchema);
+// Middleware para actualizar la fecha de modificación
+taskSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+const Task = mongoose.model('Task', taskSchema);
+
+module.exports = Task;

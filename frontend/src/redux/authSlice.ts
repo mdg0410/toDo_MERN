@@ -35,16 +35,7 @@ export const loginUser = createAsyncThunk(
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
       const response = await axios.post(`${API_URL}/login`, credentials);
-
-
-
-
-      console.log(response.data);
       
-
-
-
-
       // Guardar token en localStorage
       localStorage.setItem('token', response.data.token);
       
@@ -64,10 +55,11 @@ export const registerUser = createAsyncThunk(
     try {
       const response = await axios.post(`${API_URL}/register`, credentials);
       
+      // También guardar el token al registrar (si se retorna)
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
       
-      console.log(response.data);
-
-
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -94,7 +86,7 @@ export const verifyUser = createAsyncThunk(
         }
       });
       
-      return response.data;
+      return { user: response.data, token };
     } catch (error: any) {
       localStorage.removeItem('token'); // Eliminar token inválido
       return rejectWithValue(
@@ -153,9 +145,14 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state) => {
+      .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        // No autenticar automáticamente después de registro
+        // Si se devuelve un token y usuario, autenticar
+        if (action.payload.token && action.payload.user) {
+          state.isAuthenticated = true;
+          state.token = action.payload.token;
+          state.user = action.payload.user;
+        }
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
@@ -171,6 +168,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
+        state.token = action.payload.token;
       })
       .addCase(verifyUser.rejected, (state) => {
         state.loading = false;

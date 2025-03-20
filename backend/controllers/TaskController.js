@@ -4,21 +4,20 @@ const mongoose = require('mongoose');
 // Crear una nueva tarea
 const createTask = async (req, res) => {
   try {
-    const { title, description, status, project, assignedTo } = req.body;
+    const { title, description, status, project } = req.body;
     
-    // Validación básica
     if (!title) {
-      return res.status(400).json({ message: 'El título es obligatorio' });
+      return res.status(400).json({ message: 'El título de la tarea es obligatorio' });
     }
-    
-    const newTask = new Task({ 
-      title, 
-      description, 
-      status, 
-      project, 
-      assignedTo 
+
+    const newTask = new Task({
+      title,
+      description,
+      status: status || 'pending',
+      project: project || null,
+      createdBy: req.user.id // Este dato viene del middleware verifyJWT
     });
-    
+
     const savedTask = await newTask.save();
     res.status(201).json(savedTask);
   } catch (error) {
@@ -27,52 +26,27 @@ const createTask = async (req, res) => {
   }
 };
 
-// Obtener todas las tareas
+// Obtener todas las tareas del usuario
 const getTasks = async (req, res) => {
   try {
-    // Opcionalmente se pueden filtrar por proyecto o usuario asignado
-    const { project, assignedTo, status } = req.query;
-    let filter = {};
-    
-    // Filtrar por proyecto si se proporciona un ID válido
-    if (project) {
-      // Validar que el ID del proyecto sea un ObjectId válido
-      if (!mongoose.Types.ObjectId.isValid(project)) {
-        return res.status(400).json({ message: 'ID de proyecto no válido' });
-      }
-      filter.project = project;
+    // Filtrar por proyecto si se proporciona el ID
+    const filter = { createdBy: req.user.id };
+    if (req.query.project) {
+      filter.project = req.query.project;
     }
     
-    // Filtrar por usuario asignado
-    if (assignedTo) {
-      if (!mongoose.Types.ObjectId.isValid(assignedTo)) {
-        return res.status(400).json({ message: 'ID de usuario no válido' });
-      }
-      filter.assignedTo = assignedTo;
+    // Filtrar por estado si se proporciona
+    if (req.query.status) {
+      filter.status = req.query.status;
     }
     
-    // Filtrar por estado
-    if (status && ['pendiente', 'en progreso', 'completada'].includes(status)) {
-      filter.status = status;
-    }
+    const tasks = await Task.find(filter)
+      .populate('project', 'name')
+      .sort({ createdAt: -1 }); // Ordenar por fecha de creación descendente
     
-    // Consultar las tareas con los filtros aplicados
-    const tasks = await Task.find(filter);
-    
-    // Poblar las referencias de proyecto y usuario asignado
-    try {
-      await Task.populate(tasks, [
-        { path: 'project', select: 'name description' },
-        { path: 'assignedTo', select: 'name email' }
-      ]);
-    } catch (populateError) {
-      console.warn('No se pudieron poblar las referencias:', populateError.message);
-      // Continuar sin población
-    }
-      
-    res.status(200).json(tasks);
+    res.json(tasks);
   } catch (error) {
-    console.error('Error al obtener tareas:', error);
+    console.error(error);
     res.status(500).json({ message: 'Error al obtener las tareas', error: error.message });
   }
 };
@@ -80,25 +54,18 @@ const getTasks = async (req, res) => {
 // Obtener una tarea específica
 const getTask = async (req, res) => {
   try {
-    const { id } = req.params;
-    const task = await Task.findById(id);
-      
+    const task = await Task.findById(req.params.id).populate('project', 'name');
+
     if (!task) {
       return res.status(404).json({ message: 'Tarea no encontrada' });
     }
-    
-    // Intentar poblar las referencias de manera segura
-    try {
-      await Task.populate(task, [
-        { path: 'project', select: 'name' },
-        { path: 'assignedTo', select: 'name email' }
-      ]);
-    } catch (populateError) {
-      console.warn('No se pudieron poblar las referencias:', populateError.message);
-      // Continuar sin población
+
+    // Verificar si el usuario es el creador de la tarea
+    if (task.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'No autorizado' });
     }
-    
-    res.status(200).json(task);
+
+    res.json(task);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al obtener la tarea', error: error.message });
@@ -108,23 +75,36 @@ const getTask = async (req, res) => {
 // Actualizar una tarea
 const updateTask = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { title, description, status, project, assignedTo } = req.body;
+    const { title, description, status, project } = req.body;
     
-    // Verificar si la tarea existe
-    let task = await Task.findById(id);
+    // Verificar que la tarea existe
+    let task = await Task.findById(req.params.id);
     if (!task) {
       return res.status(404).json({ message: 'Tarea no encontrada' });
     }
-    
-    // Actualizar los campos
-    const updatedTask = await Task.findByIdAndUpdate(
-      id,
-      { title, description, status, project, assignedTo },
+
+    // Verificar si el usuario es el creador de la tarea
+    if (task.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+
+    // Datos a actualizar
+    const updatedData = { 
+      title, 
+      description, 
+      status,
+      project,
+      updatedAt: Date.now()
+    };
+
+    // Actualizar tarea
+    task = await Task.findByIdAndUpdate(
+      req.params.id, 
+      { $set: updatedData },
       { new: true }
-    );
-    
-    res.status(200).json(updatedTask);
+    ).populate('project', 'name');
+
+    res.json(task);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al actualizar la tarea', error: error.message });
@@ -134,16 +114,21 @@ const updateTask = async (req, res) => {
 // Eliminar una tarea
 const deleteTask = async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    // Verificar si la tarea existe
-    const task = await Task.findById(id);
+    // Verificar que la tarea existe
+    const task = await Task.findById(req.params.id);
     if (!task) {
       return res.status(404).json({ message: 'Tarea no encontrada' });
     }
-    
-    await Task.findByIdAndRemove(id);
-    res.status(200).json({ message: 'Tarea eliminada correctamente' });
+
+    // Verificar si el usuario es el creador de la tarea
+    if (task.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+
+    // Eliminar tarea
+    await Task.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Tarea eliminada correctamente' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al eliminar la tarea', error: error.message });
