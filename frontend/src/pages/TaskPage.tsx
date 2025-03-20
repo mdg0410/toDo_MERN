@@ -15,6 +15,7 @@ import TaskItem from '../components/TaskItem';
 const TaskPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { tasks, loading, error, currentTask } = useSelector((state: RootState) => state.tasks);
+  // El usuario se obtiene para personalizar la experiencia y mostrar mensajes personalizados
   const { user } = useSelector((state: RootState) => state.auth);
   
   const [title, setTitle] = useState('');
@@ -78,7 +79,15 @@ const TaskPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-5xl">
-      <h1 className="text-2xl font-bold mb-6">Mis Tareas</h1>
+      {/* Cabecera personalizada con el nombre del usuario */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">
+          {user ? `Tareas de ${user.name}` : 'Mis Tareas'}
+        </h1>
+        <p className="text-gray-600 mt-1">
+          {user ? `Gestiona tus tareas personales, ${user.name}` : 'Gestiona tus tareas personales'}
+        </p>
+      </div>
 
       {/* Formulario */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
@@ -174,7 +183,9 @@ const TaskPage: React.FC = () => {
       {/* Lista de tareas */}
       {!loading && tasks.length === 0 ? (
         <div className="text-center py-8 bg-white rounded-lg shadow-md">
-          <p className="text-gray-600">No tienes tareas pendientes.</p>
+          <p className="text-gray-600">
+            {user ? `No tienes tareas pendientes, ${user.name}.` : 'No tienes tareas pendientes.'}
+          </p>
           <p className="text-gray-500 text-sm mt-2">¡Crea una nueva tarea para comenzar!</p>
         </div>
       ) : (
