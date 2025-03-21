@@ -1,5 +1,6 @@
 const Project = require('../models/Project');
 const Task = require('../models/Task');
+const mongoose = require('mongoose');
 
 // Crear un nuevo proyecto
 const createProject = async (req, res) => {
@@ -27,8 +28,38 @@ const createProject = async (req, res) => {
 // Obtener todos los proyectos del usuario autenticado
 const getProjects = async (req, res) => {
   try {
+    const includeTaskCount = req.query.includeTaskCount === 'true';
+    
+    if (includeTaskCount) {
+      // Obtener proyectos con conteo de tareas
+      const projects = await Project.aggregate([
+        { $match: { createdBy: mongoose.Types.ObjectId(req.user.id) } },
+        {
+          $lookup: {
+            from: 'tasks',
+            let: { projectId: '$_id' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$project', '$$projectId'] } } },
+              { $count: 'count' }
+            ],
+            as: 'taskCountInfo'
+          }
+        },
+        {
+          $addFields: {
+            taskCount: { $ifNull: [{ $arrayElemAt: ['$taskCountInfo.count', 0] }, 0] }
+          }
+        },
+        { $project: { taskCountInfo: 0 } },
+        { $sort: { createdAt: -1 } }
+      ]);
+      
+      return res.status(200).json(projects);
+    }
+    
+    // Consulta normal sin conteo
     const projects = await Project.find({ createdBy: req.user.id })
-      .sort({ createdAt: -1 }); // Ordenar por fecha de creación descendente
+      .sort({ createdAt: -1 });
     
     res.status(200).json(projects);
   } catch (error) {
@@ -58,10 +89,11 @@ const getProject = async (req, res) => {
   }
 };
 
-// Obtener tareas de un proyecto específico
+// Obtener tareas de un proyecto específico con filtros
 const getProjectTasks = async (req, res) => {
   try {
     const { id } = req.params;
+    const { status } = req.query;
     
     // Verificar que el proyecto existe
     const project = await Project.findById(id);
@@ -74,9 +106,18 @@ const getProjectTasks = async (req, res) => {
       return res.status(403).json({ message: 'No autorizado' });
     }
 
-    // Buscar todas las tareas asociadas al proyecto
-    const tasks = await Task.find({ project: id })
-      .populate('assignedTo', 'name email');
+    // Construir el filtro de búsqueda
+    const filter = { project: id };
+    
+    // Agregar filtro de estado si se proporciona
+    if (status && ['pending', 'in-progress', 'completed'].includes(status)) {
+      filter.status = status;
+    }
+
+    // Buscar todas las tareas asociadas al proyecto con filtros
+    const tasks = await Task.find(filter)
+      .populate('project', 'name')
+      .sort({ createdAt: -1 });
     
     res.status(200).json(tasks);
   } catch (error) {

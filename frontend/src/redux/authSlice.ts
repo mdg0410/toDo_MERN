@@ -2,16 +2,15 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 // Definición de tipos
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
 }
 
-interface AuthState {
+export interface AuthState {
   user: User | null;
   token: string | null;
-  isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -21,25 +20,45 @@ interface LoginCredentials {
   password: string;
 }
 
-interface RegisterCredentials {
+interface RegisterData {
   name: string;
   email: string;
   password: string;
 }
 
+interface AuthResponse {
+  user: User;
+  token: string;
+}
+
 const API_URL = 'http://localhost:4000/api/auth';
 
+// Cargar usuario desde localStorage al iniciar la aplicación
+const loadUserFromStorage = (): { user: User | null; token: string | null } => {
+  try {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    return { user, token };
+  } catch (error) {
+    console.error('Error loading user from storage:', error);
+    return { user: null, token: null };
+  }
+};
+
 // Thunk para iniciar sesión
-export const loginUser = createAsyncThunk(
+export const login = createAsyncThunk(
   'auth/login',
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
       const response = await axios.post(`${API_URL}/login`, credentials);
+      const data: AuthResponse = response.data;
       
-      // Guardar token en localStorage
-      localStorage.setItem('token', response.data.token);
+      // Guardar token y usuario en localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
-      return response.data;
+      return data;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || 'Error al iniciar sesión'
@@ -48,39 +67,39 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// Thunk para registrar usuario
-export const registerUser = createAsyncThunk(
+// Thunk para registro
+export const register = createAsyncThunk(
   'auth/register',
-  async (credentials: RegisterCredentials, { rejectWithValue }) => {
+  async (userData: RegisterData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/register`, credentials);
+      const response = await axios.post(`${API_URL}/register`, userData);
+      const data: AuthResponse = response.data;
       
-      // También guardar el token al registrar (si se retorna)
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-      }
+      // Guardar token y usuario en localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
-      return response.data;
+      return data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || 'Error al registrar usuario'
+        error.response?.data?.message || 'Error al registrarse'
       );
     }
   }
 );
 
-// Thunk para verificar el usuario actual
+// Thunk para verificar usuario
 export const verifyUser = createAsyncThunk(
-  'auth/verify',
+  'auth/verifyUser',
   async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        return rejectWithValue('No hay token');
+        return rejectWithValue('No hay token disponible');
       }
       
-      const response = await axios.get(`${API_URL}/user`, {
+      const response = await axios.get(`${API_URL}/verify`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -88,19 +107,23 @@ export const verifyUser = createAsyncThunk(
       
       return { user: response.data, token };
     } catch (error: any) {
-      localStorage.removeItem('token'); // Eliminar token inválido
+      // Limpiar localStorage en caso de error de verificación
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
       return rejectWithValue(
-        error.response?.data?.message || 'Sesión inválida'
+        error.response?.data?.message || 'Error al verificar usuario'
       );
     }
   }
 );
 
-// Estado inicial
+// Estado inicial con carga desde localStorage
+const { user, token } = loadUserFromStorage();
+
 const initialState: AuthState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: !!localStorage.getItem('token'),
+  user,
+  token,
   loading: false,
   error: null
 };
@@ -112,9 +135,9 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       state.user = null;
       state.token = null;
-      state.isAuthenticated = false;
       state.error = null;
     },
     clearError: (state) => {
@@ -122,59 +145,54 @@ const authSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
-    // Login user
+    // login
     builder
-      .addCase(loginUser.pending, (state) => {
+      .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
+      .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
-        state.isAuthenticated = true;
-        state.token = action.payload.token;
         state.user = action.payload.user;
+        state.token = action.payload.token;
       })
-      .addCase(loginUser.rejected, (state, action) => {
+      .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
     
-    // Register user
+    // register
     builder
-      .addCase(registerUser.pending, (state) => {
+      .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
-        // Si se devuelve un token y usuario, autenticar
-        if (action.payload.token && action.payload.user) {
-          state.isAuthenticated = true;
-          state.token = action.payload.token;
-          state.user = action.payload.user;
-        }
-      })
-      .addCase(registerUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
-      
-    // Verify user
-    builder
-      .addCase(verifyUser.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(verifyUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
       })
-      .addCase(verifyUser.rejected, (state) => {
+      .addCase(register.rejected, (state, action) => {
         state.loading = false;
-        state.isAuthenticated = false;
+        state.error = action.payload as string;
+      });
+    
+    // verifyUser
+    builder
+      .addCase(verifyUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+      })
+      .addCase(verifyUser.rejected, (state, action) => {
+        state.loading = false;
         state.user = null;
         state.token = null;
+        state.error = action.payload as string;
       });
   }
 });

@@ -29,20 +29,30 @@ const createTask = async (req, res) => {
 // Obtener todas las tareas del usuario
 const getTasks = async (req, res) => {
   try {
-    // Filtrar por proyecto si se proporciona el ID
+    // Construir filtro base
     const filter = { createdBy: req.user.id };
+    
+    // Filtrar por proyecto si se proporciona el ID
     if (req.query.project) {
       filter.project = req.query.project;
+    } else if (req.query.noProject === 'true') {
+      filter.project = { $eq: null };
     }
     
     // Filtrar por estado si se proporciona
-    if (req.query.status) {
+    if (req.query.status && ['pending', 'in-progress', 'completed'].includes(req.query.status)) {
       filter.status = req.query.status;
     }
     
-    const tasks = await Task.find(filter)
-      .populate('project', 'name')
-      .sort({ createdAt: -1 }); // Ordenar por fecha de creación descendente
+    // Opciones de paginación y ordenamiento
+    const options = {
+      sort: { createdAt: -1 },
+      limit: req.query.limit ? parseInt(req.query.limit) : undefined,
+      skip: req.query.skip ? parseInt(req.query.skip) : undefined
+    };
+    
+    const tasks = await Task.find(filter, null, options)
+      .populate('project', 'name');
     
     res.json(tasks);
   } catch (error) {

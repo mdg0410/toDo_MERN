@@ -1,53 +1,67 @@
-import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import TaskPage from './pages/TaskPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/Navbar';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from './redux/store';
 import { verifyUser } from './redux/authSlice';
-import { AppDispatch } from './redux/store';
 
-// Componente que envuelve el layout para rutas protegidas
-const ProtectedLayout = () => {
-  return (
-    <>
-      <Navbar />
-      <div className="pt-4">
-        <Outlet />
-      </div>
-    </>
-  );
-};
+import Login from './pages/LoginPage';
+import Register from './pages/RegisterPage';
+import Dashboard from './pages/Dashboard';
+import TaskPage from './pages/TaskPage';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
 
 function App() {
+  const { user } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
-  
+
+  // Verificar el token al cargar la aplicación
   useEffect(() => {
-    // Verificar autenticación al cargar la aplicación
     dispatch(verifyUser());
   }, [dispatch]);
-  
+
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
         {/* Rutas públicas */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        
+        <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+        <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
+
         {/* Rutas protegidas */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<ProtectedLayout />}>
-            <Route path="/tasks" element={<TaskPage />} />
-            <Route path="/" element={<Navigate to="/tasks" replace />} />
-          </Route>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to="/dashboard" />} />
+          
+          <Route path="dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="tasks" element={
+            <ProtectedRoute>
+              <TaskPage />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="projects" element={
+            <ProtectedRoute>
+              <ProjectsPage />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="projects/:projectId" element={
+            <ProtectedRoute>
+              <ProjectDetailPage />
+            </ProtectedRoute>
+          } />
         </Route>
-        
-        {/* Redirección por defecto */}
-        <Route path="*" element={<Navigate to="/login" />} />
+
+        {/* Ruta para cualquier otra URL no definida */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
 

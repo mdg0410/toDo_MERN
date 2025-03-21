@@ -1,36 +1,21 @@
-import React, { useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Navigate, Outlet } from 'react-router-dom';
-import { RootState, AppDispatch } from '../redux/store';
-import { verifyUser } from '../redux/authSlice';
+import React, { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
 
-const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
-  const dispatch = useDispatch<AppDispatch>();
-  
-  useEffect(() => {
-    // Verificar el token al cargar una ruta protegida
-    if (!isAuthenticated) {
-      dispatch(verifyUser());
-    }
-  }, [dispatch, isAuthenticated]);
-  
-  // Mientras verifica, mostrar un spinner o mensaje de carga
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  if (!user) {
+    // Redirige al login si no hay usuario autenticado
+    return <Navigate to="/login" replace />;
   }
-  
-  // Si no está autenticado después de verificar, redirigir a login
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
-  
-  // Si está autenticado, mostrar las rutas hijo
-  return <Outlet />;
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
