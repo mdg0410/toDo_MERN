@@ -8,6 +8,10 @@ export interface Task {
   description?: string;
   status: 'pending' | 'in-progress' | 'completed';
   createdBy: string;
+  project?: {
+    _id: string;
+    name: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -17,12 +21,14 @@ export interface TaskState {
   loading: boolean;
   error: string | null;
   currentTask: Task | null;
+  projectTasks: { [key: string]: Task[] };
 }
 
 interface TaskData {
   title: string;
   description?: string;
   status?: 'pending' | 'in-progress' | 'completed';
+  project?: string | null;
 }
 
 interface TaskUpdateData extends TaskData {
@@ -44,10 +50,14 @@ const getConfig = () => {
 // Thunk para obtener todas las tareas
 export const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
-  async (_, { rejectWithValue }) => {
+  async (arg: { projectId?: string } | undefined, { rejectWithValue }) => {
     try {
-      const response = await axios.get(API_URL, getConfig());
-      return response.data;
+      let url = API_URL;
+      if (arg && arg.projectId) {
+        url += `?project=${arg.projectId}`;
+      }
+      const response = await axios.get(url, getConfig());
+      return { tasks: response.data, projectId: arg?.projectId };
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || 'Error al obtener las tareas'
@@ -56,12 +66,36 @@ export const fetchTasks = createAsyncThunk(
   }
 );
 
+// Thunk para obtener tareas sin proyecto
+export const fetchTasksWithoutProject = createAsyncThunk(
+  'tasks/fetchTasksWithoutProject',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}?noProject=true`, getConfig());
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Error al obtener las tareas sin proyecto'
+      );
+    }
+  }
+);
+
 // Thunk para crear una tarea
 export const createTask = createAsyncThunk(
   'tasks/createTask',
-  async (taskData: TaskData, { rejectWithValue }) => {
+  async (taskData: TaskData, { rejectWithValue, dispatch }) => {
     try {
       const response = await axios.post(API_URL, taskData, getConfig());
+      
+      // Si la tarea está asociada a un proyecto, actualizar también las tareas del proyecto
+      if (taskData.project) {
+        dispatch(fetchTasks({ projectId: taskData.project }));
+      } else {
+        // Si no tiene proyecto, actualizar todas las tareas
+        dispatch(fetchTasks(undefined));
+      }
+      
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -107,7 +141,8 @@ const initialState: TaskState = {
   tasks: [],
   loading: false,
   error: null,
-  currentTask: null
+  currentTask: null,
+  projectTasks: {}
 };
 
 // Slice de tareas
@@ -134,9 +169,30 @@ const taskSlice = createSlice({
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
         state.loading = false;
-        state.tasks = action.payload;
+        const { tasks, projectId } = action.payload;
+        state.tasks = tasks;
+        
+        // Si hay un projectId, también actualizar projectTasks
+        if (projectId) {
+          state.projectTasks[projectId] = tasks;
+        }
       })
       .addCase(fetchTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+    
+    // fetchTasksWithoutProject
+    builder
+      .addCase(fetchTasksWithoutProject.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTasksWithoutProject.fulfilled, (state, action) => {
+        state.loading = false;
+        state.tasks = action.payload;
+      })
+      .addCase(fetchTasksWithoutProject.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
@@ -149,7 +205,15 @@ const taskSlice = createSlice({
       })
       .addCase(createTask.fulfilled, (state, action) => {
         state.loading = false;
-        state.tasks.push(action.payload);
+        
+        // Añadir la nueva tarea al principio del array para que aparezca primero
+        state.tasks = [action.payload, ...state.tasks];
+        
+        // Actualizar también las tareas del proyecto si corresponde
+        const projectId = action.payload.project?._id;
+        if (projectId && state.projectTasks[projectId]) {
+          state.projectTasks[projectId] = [action.payload, ...state.projectTasks[projectId]];
+        }
       })
       .addCase(createTask.rejected, (state, action) => {
         state.loading = false;
@@ -168,6 +232,14 @@ const taskSlice = createSlice({
           task._id === action.payload._id ? action.payload : task
         );
         state.currentTask = null;
+        
+        // Actualizar también las tareas del proyecto si corresponde
+        const projectId = action.payload.project?._id;
+        if (projectId && state.projectTasks[projectId]) {
+          state.projectTasks[projectId] = state.projectTasks[projectId].map(task => 
+            task._id === action.payload._id ? action.payload : task
+          );
+        }
       })
       .addCase(updateTask.rejected, (state, action) => {
         state.loading = false;
@@ -182,7 +254,19 @@ const taskSlice = createSlice({
       })
       .addCase(deleteTask.fulfilled, (state, action) => {
         state.loading = false;
-        state.tasks = state.tasks.filter(task => task._id !== action.payload);
+        const deletedTaskId = action.payload;
+        const taskToDelete = state.tasks.find(task => task._id === deletedTaskId);
+        const projectId = taskToDelete?.project?._id;
+        
+        // Eliminar de la lista principal
+        state.tasks = state.tasks.filter(task => task._id !== deletedTaskId);
+        
+        // Eliminar también de las tareas del proyecto si corresponde
+        if (projectId && state.projectTasks[projectId]) {
+          state.projectTasks[projectId] = state.projectTasks[projectId].filter(
+            task => task._id !== deletedTaskId
+          );
+        }
       })
       .addCase(deleteTask.rejected, (state, action) => {
         state.loading = false;
