@@ -13,6 +13,7 @@ export interface AuthState {
   token: string | null;
   loading: boolean;
   error: string | null;
+  verificationAttempted: boolean;
 }
 
 interface LoginCredentials {
@@ -96,7 +97,20 @@ export const register = createAsyncThunk(
 // Thunk para verificar usuario
 export const verifyUser = createAsyncThunk(
   'auth/verifyUser',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
+    const state = getState() as { auth: AuthState };
+    
+    // Si ya intentamos verificar antes, usar datos en caché directamente
+    if (state.auth.verificationAttempted) {
+      const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      if (token && userStr) {
+        const cachedUser = JSON.parse(userStr);
+        return { user: cachedUser, token };
+      }
+      return rejectWithValue('No hay datos de usuario disponibles');
+    }
+    
     try {
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
@@ -111,13 +125,23 @@ export const verifyUser = createAsyncThunk(
       try {
         // Verificar con el servidor
         const response = await axios.get(`${API_URL}/verify`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          // Añadir un timeout de 3 segundos para evitar esperas largas
+          timeout: 3000
         });
         
         // Actualizar la información del usuario desde el servidor
         return { user: response.data, token };
-      } catch (serverError) {
-        // Si hay un error del servidor pero teníamos un usuario en caché, seguir usando ese
+      } catch (serverError: any) {
+        // Si el error es 404, simplemente usamos los datos en caché sin mostrar error
+        if (serverError.response && serverError.response.status === 404) {
+          if (cachedUser) {
+            console.info('Ruta de verificación no disponible, usando datos de caché');
+            return { user: cachedUser, token };
+          }
+        }
+        
+        // Para otros errores, intentamos usar el caché si está disponible
         if (cachedUser) {
           console.warn('Error al verificar con servidor, usando datos de caché:', serverError);
           return { user: cachedUser, token };
@@ -125,9 +149,11 @@ export const verifyUser = createAsyncThunk(
         throw serverError; // Re-lanzar el error si no hay caché
       }
     } catch (error: any) {
-      // Limpiar localStorage en caso de error
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      // Limpiar localStorage solo si es un error crítico (no 404)
+      if (!error.response || error.response.status !== 404) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
       
       return rejectWithValue(
         error.response?.data?.message || 'Error al verificar usuario'
@@ -143,7 +169,8 @@ const initialState: AuthState = {
   user,
   token,
   loading: false,
-  error: null
+  error: null,
+  verificationAttempted: false
 };
 
 // Slice de autenticación
@@ -160,6 +187,9 @@ const authSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    setVerificationAttempted: (state, action) => {
+      state.verificationAttempted = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -205,15 +235,22 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        state.verificationAttempted = true;
       })
       .addCase(verifyUser.rejected, (state, action) => {
         state.loading = false;
-        state.user = null;
-        state.token = null;
+        // Si el error fue por 404, no limpiamos el usuario
+        if (action.error.message?.includes('404')) {
+          state.verificationAttempted = true;
+        } else {
+          state.user = null;
+          state.token = null;
+        }
         state.error = action.payload as string;
+        state.verificationAttempted = true;
       });
   }
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, setVerificationAttempted } = authSlice.actions;
 export default authSlice.reducer;

@@ -21,16 +21,21 @@ function App() {
   // Verificar el token al cargar la aplicación
   useEffect(() => {
     const initializeAuth = async () => {
-      // Verificar si hay un token en localStorage
-      const token = localStorage.getItem('token');
-      
-      // Si hay un token, intentar verificarlo
-      if (token) {
-        await dispatch(verifyUser());
+      try {
+        // Verificar si hay un token en localStorage
+        const token = localStorage.getItem('token');
+        
+        // Si hay un token, intentar verificarlo
+        if (token) {
+          await dispatch(verifyUser()).unwrap();
+        }
+        
+        // Marcar la inicialización como completada
+        setIsInitialized(true);
+      } catch (error) {
+        // Fallback silencioso - la lógica de manejo ya está en el slice
+        console.log('Verificación de usuario completada con fallback');
       }
-      
-      // Marcar la inicialización como completada
-      setIsInitialized(true);
     };
     
     initializeAuth();
