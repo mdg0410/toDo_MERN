@@ -1,209 +1,150 @@
-# ToDo MERN - Aplicación de Gestión de Tareas
+# ToDo MERN - Aplicación de Lista de Tareas
 
-Una aplicación completa para gestionar proyectos y tareas, construida con el stack MERN (MongoDB, Express, React, Node.js).
+## 📋 Descripción del Proyecto
 
-## Índice
+ToDo MERN es una aplicación full-stack para gestión de tareas, desarrollada con el stack MERN (MongoDB, Express, React, Node.js). Permite a los usuarios crear cuentas, administrar tareas personales con fechas límite y prioridad, además de ofrecer filtrado y ordenamiento para una mejor organización.
 
-1. [Requisitos](#requisitos)
-2. [Instalación](#instalación)
-3. [Estructura del Proyecto](#estructura-del-proyecto)
-4. [Configuración](#configuración)
-5. [API Endpoints](#api-endpoints)
-6. [Pruebas con Postman](#pruebas-con-postman)
+## ✨ Características
 
-## Requisitos
+- **Autenticación completa** con JWT, registro e inicio de sesión
+- **CRUD de tareas** con validaciones en frontend y backend
+- **Filtrado y ordenamiento** por estado, prioridad y fecha
+- **Diseño responsivo** adaptado a dispositivos móviles y escritorio
+- **Sistema de notificaciones** para tareas pendientes y vencidas
+- **Modo oscuro/claro** para mejor experiencia de usuario
 
+## 🛠️ Tecnologías Utilizadas
+
+### Backend
+- Node.js & Express
+- MongoDB con Mongoose
+- JWT para autenticación
+- bcrypt para encriptación
+- express-validator para validaciones
+- cors, helmet para seguridad
+
+### Frontend
+- React 18 con hooks personalizados
+- React Router v6 para navegación
+- Axios para comunicación con API
+- Tailwind CSS para estilos
+- React-icons para iconografía
+- React-datepicker para selección de fechas
+
+## 🚀 Instalación y Configuración
+
+### Prerrequisitos
 - Node.js (v14 o superior)
 - MongoDB (local o Atlas)
 - npm o yarn
 
-## Instalación
-
-1. Clonar el repositorio:
+### Configuración del Backend
 ```bash
-git clone <url-del-repositorio>
-cd toDo_MERN
-```
-
-2. Instalar dependencias del backend:
-```bash
+# Navegar al directorio del backend
 cd backend
+
+# Instalar dependencias
 npm install
-```
 
-3. Configurar variables de entorno:
-   Crear un archivo `.env` en la carpeta backend con:
-```
-PORT=4000
-MONGO_URI=mongodb://localhost:27017/todo_mern
-JWT_SECRET=palabrasecreta
-```
+# Configurar variables de entorno (crear archivo .env)
+# Ver .env.example para referencia
 
-4. Iniciar el servidor de desarrollo:
-```bash
+# Iniciar servidor en modo desarrollo
 npm run dev
 ```
 
-El servidor se iniciará en `http://localhost:4000`
-
-## Estructura del Proyecto
-
-### Modelo de Usuario
-- Nombre
-- Correo electrónico (único)
-- Contraseña (encriptada automáticamente)
-- Fecha de creación y actualización
-
-### Modelo de Proyecto
-- Nombre
-- Descripción
-- Usuario propietario (relación)
-- Fecha de creación y actualización
-
-### Modelo de Tarea
-- Título
-- Descripción
-- Estado (pendiente, en progreso, completada)
-- Proyecto asociado (relación)
-- Usuario asignado (relación)
-- Fecha de creación y actualización
-
-## Configuración del Backend
-
-### Requisitos Previos
-- Node.js (versión 14 o superior)
-- MongoDB (local o Atlas)
-
-### Pasos para la Instalación
-
-1. Clonar el repositorio
-```
-git clone <url-del-repositorio>
-cd toDo_MERN
-```
-
-2. Instalar dependencias del backend
-```
-cd backend
-npm install
-```
-
-3. Crear archivo de variables de entorno
-Crear un archivo `.env` en el directorio `/backend` con las siguientes variables:
-```
-PORT=4000
-MONGO_URI=mongodb://localhost:27017/todo_mern
-JWT_SECRET=palabrasecreta
-```
-
-4. Iniciar el servidor de desarrollo
-```
-npm run dev
-```
-
-El servidor se iniciará en `http://localhost:4000`
-
-## Backend
-
-### Resumen de Implementación
-
-El backend de la aplicación está construido con Node.js, Express, MongoDB y Mongoose, siguiendo una arquitectura RESTful. Las principales características implementadas son:
-
-#### Sistema de Autenticación
-- Registro de usuarios con encriptación de contraseñas (bcrypt)
-- Login con generación de token JWT
-- Middleware de verificación de token para rutas protegidas
-
-#### Gestión de Proyectos
-- CRUD completo para proyectos
-- Cada proyecto está vinculado a su usuario creador
-- Protección de rutas para garantizar que solo el creador pueda modificar/eliminar
-
-#### Gestión de Tareas
-- CRUD completo para tareas
-- Relaciones con proyectos y usuarios asignados
-- Filtrado por proyecto, usuario asignado o estado
-- Endpoint específico para obtener tareas por proyecto
-
-#### Estructura de Datos
-- **Usuarios**: autenticación y perfil
-- **Proyectos**: agrupación lógica de tareas
-- **Tareas**: unidades de trabajo con estado y asignación
-
-#### Seguridad
-- Tokens JWT para mantener sesiones
-- Validación de datos en endpoints
-- Manejo de errores centralizado
-
-### Rutas API Principales
-
-| Categoría | Método | Ruta | Descripción |
-|-----------|--------|------|-------------|
-| Auth | POST | `/api/auth/register` | Registro de usuario |
-| Auth | POST | `/api/auth/login` | Login de usuario |
-| Auth | GET | `/api/auth/user` | Verificar usuario autenticado |
-| Proyectos | GET | `/api/projects` | Obtener todos los proyectos |
-| Proyectos | POST | `/api/projects` | Crear un proyecto |
-| Proyectos | GET | `/api/projects/:id` | Obtener un proyecto |
-| Proyectos | GET | `/api/projects/:id/tasks` | Obtener tareas de un proyecto |
-| Tareas | GET | `/api/tasks` | Obtener tareas (con filtros opcionales) |
-| Tareas | POST | `/api/tasks` | Crear una tarea |
-| Tareas | PUT | `/api/tasks/:id` | Actualizar una tarea |
-| Tareas | DELETE | `/api/tasks/:id` | Eliminar una tarea |
-
-Para más detalles sobre cómo probar estos endpoints, consulta la [sección de pruebas con Postman](#pruebas-con-postman).
-
-## Próximos Pasos
-- Frontend en React
-- Despliegue en producción
-
-## Tecnologías Utilizadas
-- MongoDB con Mongoose
-- Express.js
-- Node.js
-- bcrypt (para encriptación)
-- JWT (para autenticación)
-
-## Testing
-
-Este proyecto utiliza Jest para realizar pruebas en el frontend y backend.
-
-### Comandos disponibles
-
-Para ejecutar todas las pruebas:
+### Configuración del Frontend
 ```bash
+# Navegar al directorio del frontend
+cd frontend
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno (crear archivo .env)
+# Ver .env.example para referencia
+
+# Iniciar aplicación React
+npm start
+```
+
+## 📚 Documentación API
+
+La API REST sigue principios RESTful y está versionada (v1).
+
+### Endpoints principales:
+
+#### Autenticación
+- `POST /api/v1/auth/register` - Registrar nuevo usuario
+- `POST /api/v1/auth/login` - Iniciar sesión
+- `GET /api/v1/auth/profile` - Obtener perfil del usuario autenticado
+
+#### Tareas
+- `GET /api/v1/tasks` - Obtener todas las tareas del usuario
+- `POST /api/v1/tasks` - Crear nueva tarea
+- `GET /api/v1/tasks/:id` - Obtener una tarea específica
+- `PUT /api/v1/tasks/:id` - Actualizar una tarea
+- `DELETE /api/v1/tasks/:id` - Eliminar una tarea
+
+## 🧪 Testing
+
+El proyecto incluye pruebas unitarias y de integración:
+
+```bash
+# Ejecutar pruebas del backend
+cd backend
+npm test
+
+# Ejecutar pruebas del frontend
+cd frontend
 npm test
 ```
 
-Para ejecutar solo pruebas del backend:
-```bash
-npm run test:backend
+## 📝 Estructura del Proyecto
+
+```
+toDo_MERN/
+├── backend/              # Servidor Express
+│   ├── config/           # Configuración 
+│   ├── controllers/      # Controladores
+│   ├── middleware/       # Middlewares
+│   ├── models/           # Modelos Mongoose
+│   ├── routes/           # Rutas API
+│   ├── services/         # Servicios y lógica de negocio
+│   ├── utils/            # Utilidades
+│   └── tests/            # Pruebas
+│
+└── frontend/             # Aplicación React
+    ├── public/           # Archivos estáticos
+    └── src/
+        ├── components/   # Componentes React
+        │   ├── auth/     # Componentes de autenticación
+        │   ├── tasks/    # Componentes de tareas
+        │   └── ui/       # Componentes de interfaz
+        ├── context/      # Context API
+        ├── hooks/        # Custom Hooks
+        ├── pages/        # Páginas principales
+        ├── services/     # Servicios API
+        └── utils/        # Utilidades
 ```
 
-Para ejecutar solo pruebas del frontend:
-```bash
-npm run test:frontend
-```
+## 👥 Contribución
 
-Para ejecutar pruebas en modo observador (que se re-ejecutan automáticamente al modificar archivos):
-```bash
-npm run test:watch        # Todos los tests
-npm run test:backend:watch    # Solo backend
-npm run test:frontend:watch   # Solo frontend
-```
+Las contribuciones son bienvenidas. Para contribuir:
 
-Para obtener informes de cobertura:
-```bash
-npm run test:coverage         # Todos los tests
-npm run test:backend:coverage # Solo backend
-npm run test:frontend:coverage # Solo frontend
-```
+1. Haz fork del repositorio
+2. Crea una rama para tu feature (`git checkout -b feature/amazing-feature`)
+3. Realiza tus cambios y haz commit (`git commit -m 'Añadir nueva característica'`)
+4. Push a la rama (`git push origin feature/amazing-feature`)
+5. Abre un Pull Request
 
-### Estructura de las pruebas
+## 📄 Licencia
 
-- Backend: `backend/__tests__/`
-- Frontend: `frontend/__tests__/`
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
 
-## Licencia
-ISC
+## 📞 Contacto
+
+Steven [Tu Apellido] - [tu.email@ejemplo.com]
+
+Enlace del proyecto: [https://github.com/tu-usuario/toDo_MERN](https://github.com/tu-usuario/toDo_MERN)
 
