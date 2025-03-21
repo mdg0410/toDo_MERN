@@ -94,17 +94,24 @@ export const verifyUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
       
       if (!token) {
         return rejectWithValue('No hay token disponible');
       }
       
+      // Si hay un usuario en localStorage y un token, considerarlo válido inmediatamente
+      // mientras hacemos la verificación en el servidor
+      const cachedUser = userStr ? JSON.parse(userStr) : null;
+      
+      // Hacer la verificación en el servidor
       const response = await axios.get(`${API_URL}/verify`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       
+      // Actualizar el usuario con la información del servidor
       return { user: response.data, token };
     } catch (error: any) {
       // Limpiar localStorage en caso de error de verificación

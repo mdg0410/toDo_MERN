@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../redux/store';
 import { 
@@ -21,6 +21,9 @@ const ProjectsPage: React.FC = () => {
   const [description, setDescription] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
+  // Referencia al formulario para hacer scroll automático
+  const formRef = useRef<HTMLDivElement>(null);
+
   // Cargar proyectos al iniciar
   useEffect(() => {
     dispatch(fetchProjects());
@@ -32,6 +35,14 @@ const ProjectsPage: React.FC = () => {
       setName(currentProject.name);
       setDescription(currentProject.description || '');
       setIsEditing(true);
+      
+      // Hacer scroll al formulario
+      if (formRef.current) {
+        formRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
     }
   }, [currentProject]);
 
@@ -85,7 +96,10 @@ const ProjectsPage: React.FC = () => {
       </div>
 
       {/* Formulario */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+      <div 
+        ref={formRef} 
+        className="bg-white p-4 rounded-lg shadow-md mb-6"
+      >
         <h2 className="text-xl font-semibold mb-4">
           {isEditing ? 'Editar Proyecto' : 'Nuevo Proyecto'}
         </h2>

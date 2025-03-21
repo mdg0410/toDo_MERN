@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link } from 'react-router-dom';
 import { AppDispatch, RootState } from '../redux/store';
@@ -34,6 +34,9 @@ const ProjectDetailPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
 
+  // Referencia al formulario para hacer scroll automático
+  const formRef = useRef<HTMLDivElement>(null);
+
   // Cargar proyectos y tareas al iniciar
   useEffect(() => {
     if (projectId) {
@@ -49,6 +52,14 @@ const ProjectDetailPage: React.FC = () => {
       setDescription(currentTask.description || '');
       setStatus(currentTask.status);
       setIsEditing(true);
+      
+      // Hacer scroll al formulario
+      if (formRef.current) {
+        formRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
     }
   }, [currentTask]);
 
@@ -93,6 +104,11 @@ const ProjectDetailPage: React.FC = () => {
   };
 
   const loading = projectLoading || taskLoading;
+
+  // Filtrar las tareas según el estado seleccionado
+  const filteredProjectTasks = statusFilter 
+    ? projectTasks.filter(task => task.status === statusFilter) 
+    : projectTasks;
 
   // Estadísticas de tareas
   const stats = {
@@ -141,7 +157,10 @@ const ProjectDetailPage: React.FC = () => {
       </div>
 
       {/* Formulario */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+      <div 
+        ref={formRef} 
+        className="bg-white p-4 rounded-lg shadow-md mb-6"
+      >
         <h2 className="text-xl font-semibold mb-4">
           {isEditing ? 'Editar Tarea' : 'Nueva Tarea en este Proyecto'}
         </h2>
@@ -301,20 +320,25 @@ const ProjectDetailPage: React.FC = () => {
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-4">
           Tareas de este proyecto
+          {statusFilter && (
+            <span className="ml-2 text-sm font-normal text-gray-500">
+              (Filtradas por: {statusFilter === 'pending' ? 'Pendiente' : statusFilter === 'in-progress' ? 'En Progreso' : 'Completada'})
+            </span>
+          )}
         </h2>
         
-        {!loading && projectTasks.length === 0 ? (
+        {!loading && filteredProjectTasks.length === 0 ? (
           <div className="text-center py-8 bg-white rounded-lg shadow-md">
             <p className="text-gray-600">
-              No hay tareas en este proyecto.
+              {statusFilter ? 'No hay tareas con el estado seleccionado.' : 'No hay tareas en este proyecto.'}
             </p>
             <p className="text-gray-500 text-sm mt-2">
-              ¡Crea una nueva tarea para comenzar!
+              {!statusFilter && '¡Crea una nueva tarea para comenzar!'}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {projectTasks.map((task) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4" id="tasks-grid">
+            {filteredProjectTasks.map((task) => (
               <TaskItem
                 key={task._id}
                 task={task}

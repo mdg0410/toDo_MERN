@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../redux/store';
 import { 
@@ -29,6 +29,9 @@ const TaskPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');  
   const [filterStatus, setFilterStatus] = useState<string>('');
 
+  // Referencia al formulario para hacer scroll automático
+  const formRef = useRef<HTMLDivElement>(null);
+
   // Cargar tareas y proyectos al iniciar
   useEffect(() => {
     dispatch(fetchProjects());
@@ -43,6 +46,14 @@ const TaskPage: React.FC = () => {
       setStatus(currentTask.status);
       setProjectId(currentTask.project?._id || '');
       setIsEditing(true);
+      
+      // Hacer scroll al formulario
+      if (formRef.current) {
+        formRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
     }
   }, [currentTask]);
 
@@ -136,7 +147,10 @@ const TaskPage: React.FC = () => {
       </div>
 
       {/* Formulario */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+      <div 
+        ref={formRef} 
+        className="bg-white p-4 rounded-lg shadow-md mb-6"
+      >
         <h2 className="text-xl font-semibold mb-4">
           {isEditing ? 'Editar Tarea' : 'Nueva Tarea'}
         </h2>

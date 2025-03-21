@@ -84,9 +84,18 @@ export const fetchTasksWithoutProject = createAsyncThunk(
 // Thunk para crear una tarea
 export const createTask = createAsyncThunk(
   'tasks/createTask',
-  async (taskData: TaskData, { rejectWithValue }) => {
+  async (taskData: TaskData, { rejectWithValue, dispatch }) => {
     try {
       const response = await axios.post(API_URL, taskData, getConfig());
+      
+      // Si la tarea está asociada a un proyecto, actualizar también las tareas del proyecto
+      if (taskData.project) {
+        dispatch(fetchTasks({ projectId: taskData.project }));
+      } else {
+        // Si no tiene proyecto, actualizar todas las tareas
+        dispatch(fetchTasks(undefined));
+      }
+      
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -196,12 +205,14 @@ const taskSlice = createSlice({
       })
       .addCase(createTask.fulfilled, (state, action) => {
         state.loading = false;
-        state.tasks.push(action.payload);
+        
+        // Añadir la nueva tarea al principio del array para que aparezca primero
+        state.tasks = [action.payload, ...state.tasks];
         
         // Actualizar también las tareas del proyecto si corresponde
         const projectId = action.payload.project?._id;
         if (projectId && state.projectTasks[projectId]) {
-          state.projectTasks[projectId].push(action.payload);
+          state.projectTasks[projectId] = [action.payload, ...state.projectTasks[projectId]];
         }
       })
       .addCase(createTask.rejected, (state, action) => {

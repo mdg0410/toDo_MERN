@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from './redux/store';
@@ -14,13 +14,26 @@ import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 
 function App() {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, loading: authLoading } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
 
   // Verificar el token al cargar la aplicación
   useEffect(() => {
-    dispatch(verifyUser());
+    // Solo intentar verificar si hay un token en localStorage
+    const token = localStorage.getItem('token');
+    if (token) {
+      dispatch(verifyUser());
+    }
   }, [dispatch]);
+
+  // Mostrar un indicador de carga mientras se verifica la autenticación
+  if (authLoading && !user) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
