@@ -38,6 +38,11 @@ const loadUserFromStorage = (): { user: User | null; token: string | null } => {
   try {
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
+    
+    if (!token) {
+      return { user: null, token: null };
+    }
+    
     const user = userStr ? JSON.parse(userStr) : null;
     return { user, token };
   } catch (error) {
@@ -100,21 +105,27 @@ export const verifyUser = createAsyncThunk(
         return rejectWithValue('No hay token disponible');
       }
       
-      // Si hay un usuario en localStorage y un token, considerarlo válido inmediatamente
-      // mientras hacemos la verificación en el servidor
+      // Si hay un usuario en localStorage, usarlo temporalmente mientras se verifica
       const cachedUser = userStr ? JSON.parse(userStr) : null;
       
-      // Hacer la verificación en el servidor
-      const response = await axios.get(`${API_URL}/verify`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      try {
+        // Verificar con el servidor
+        const response = await axios.get(`${API_URL}/verify`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // Actualizar la información del usuario desde el servidor
+        return { user: response.data, token };
+      } catch (serverError) {
+        // Si hay un error del servidor pero teníamos un usuario en caché, seguir usando ese
+        if (cachedUser) {
+          console.warn('Error al verificar con servidor, usando datos de caché:', serverError);
+          return { user: cachedUser, token };
         }
-      });
-      
-      // Actualizar el usuario con la información del servidor
-      return { user: response.data, token };
+        throw serverError; // Re-lanzar el error si no hay caché
+      }
     } catch (error: any) {
-      // Limpiar localStorage en caso de error de verificación
+      // Limpiar localStorage en caso de error
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from './redux/store';
@@ -14,20 +14,30 @@ import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 
 function App() {
-  const { user, loading: authLoading } = useSelector((state: RootState) => state.auth);
+  const { user, loading: authLoading, token } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Verificar el token al cargar la aplicación
   useEffect(() => {
-    // Solo intentar verificar si hay un token en localStorage
-    const token = localStorage.getItem('token');
-    if (token) {
-      dispatch(verifyUser());
-    }
+    const initializeAuth = async () => {
+      // Verificar si hay un token en localStorage
+      const token = localStorage.getItem('token');
+      
+      // Si hay un token, intentar verificarlo
+      if (token) {
+        await dispatch(verifyUser());
+      }
+      
+      // Marcar la inicialización como completada
+      setIsInitialized(true);
+    };
+    
+    initializeAuth();
   }, [dispatch]);
 
-  // Mostrar un indicador de carga mientras se verifica la autenticación
-  if (authLoading && !user) {
+  // Mostrar un indicador de carga durante la inicialización
+  if (!isInitialized) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -39,8 +49,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Rutas públicas */}
-        <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-        <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
+        <Route path="/login" element={user || token ? <Navigate to="/dashboard" /> : <Login />} />
+        <Route path="/register" element={user || token ? <Navigate to="/dashboard" /> : <Register />} />
 
         {/* Rutas protegidas */}
         <Route path="/" element={<Layout />}>

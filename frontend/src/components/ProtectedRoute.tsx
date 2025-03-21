@@ -8,10 +8,19 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, loading, token } = useSelector((state: RootState) => state.auth);
 
-  if (!user) {
-    // Redirige al login si no hay usuario autenticado
+  // Mostrar un indicador de carga mientras se verifica el token
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Si no hay usuario ni token, redirigir al login
+  if (!user && !token) {
     return <Navigate to="/login" replace />;
   }
 
